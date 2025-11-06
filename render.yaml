@@ -1,0 +1,35 @@
+# render.yaml - Place in apps/api/
+services:
+  - type: web
+    name: pulse-api
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: pnpm install && pnpm prisma:generate && pnpm build
+    startCommand: pnpm start
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+
+# ---
+
+# Build script for Render
+# apps/api/package.json - Update scripts section:
+
+{
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc && pnpm prisma:generate",
+    "start": "node dist/index.js",
+    "prisma:migrate": "prisma migrate deploy",
+    "prisma:generate": "prisma generate",
+    "prisma:studio": "prisma studio",
+    "postinstall": "prisma generate"
+  }
+}

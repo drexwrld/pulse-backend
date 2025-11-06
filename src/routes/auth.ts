@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { sign } from 'hono/jwt';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
-import { prisma } from '../db';
+import { prisma } from '../db.js';
 
 const authRoutes = new Hono();
 
