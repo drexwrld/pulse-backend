@@ -1,23 +1,36 @@
-import { Request, Response } from "express";
-import { User } from "../models/User";
+import { Hono } from "hono";
+import { prisma } from "../db.js";
 
-export const approveHOC = async (req: Request, res: Response) => {
+const adminRoutes = new Hono();
+
+// ✅ Approve a pending HOC
+adminRoutes.patch("/approve-hoc/:userId", async (c) => {
   try {
-    const { userId } = req.params;
+    const userId = Number(c.req.param("userId"));
 
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ error: "User not found" });
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return c.json({ error: "User not found" }, 404);
 
     if (!user.isHOCPending)
-      return res.status(400).json({ error: "User is not pending approval" });
+      return c.json({ error: "User is not pending approval" }, 400);
 
-    user.isHOC = true;
-    user.isHOCPending = false;
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        isHOC: true,
+        isHOCPending: false,
+      },
+    });
 
-    await user.save();
-
-    res.json({ message: "HOC approved successfully", user });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    return c.json({
+      success: true,
+      message: "HOC approved successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Approve HOC error:", error);
+    return c.json({ error: "Failed to approve HOC" }, 500);
   }
-};
+});
+
+export default adminRoutes;
