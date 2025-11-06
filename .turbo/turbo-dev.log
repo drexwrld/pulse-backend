@@ -1,0 +1,9 @@
+
+> pulse-api@0.1.0 dev C:\Users\USER\Desktop\pulse\apps\api
+> tsx watch src/index.ts
+
+🚀 Pulse API running at http://localhost:5000
+📡 Health: http://localhost:5000/api/health
+TypeError: this.raw.headers.get is not a function
+    at HonoRequest.header (file:///C:/Users/USER/Desktop/pulse/node_modules/.pnpm/hono@4.10.4/node_modules/hono/dist/request.js:50:31)
+    at Array.cors2 (file:///C:/Users/USER/Desktop/pulse/node_modules/.pnpm/hono@4.10.4/node_modules/hono/dist/middleware/cors/index.js:39:53)
