@@ -1,6 +1,6 @@
 // apps/api/src/routes/home.ts
 import { Hono } from 'hono';
-import { prisma } from '../db';
+import { prisma } from '../db.js';
 
 const home = new Hono();
 
