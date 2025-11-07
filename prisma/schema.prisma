@@ -8,24 +8,328 @@ datasource db {
 }
 
 model User {
-  id            Int     @id @default(autoincrement())
-  email         String  @unique
+  id            Int       @id @default(autoincrement())
+  email         String    @unique
   fullName      String
   password      String
-  role          Role    @default(STUDENT)
+  role          Role      @default(STUDENT)
   department    String?
   academicYear  String?
-  isHOC         Boolean @default(false)
-  isHOCPending  Boolean @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  isHOC         Boolean   @default(false)
+  isHOCPending  Boolean   @default(false)
+  phone         String?
+  studentId     String?
+  qualification String?
+  experience    String?
+  officeNumber  String?
+  specializations String?
+  bio           String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  enrolledClasses    Enrollment[]
+  taughtClasses      Class[]      @relation("InstructorClasses")
+  managedClasses     Class[]      @relation("HOCClasses")
+  attendanceRecords  AttendanceRecord[]
+  assignmentSubmissions AssignmentSubmission[]
+  grades             Grade[]
+  createdAssignments Assignment[]  // Added this relation
+  createdStudyGroups StudyGroup[] @relation("StudyGroupCreator")
+  studyGroupMembers  StudyGroupMember[]
+  sentMessages       Message[]    @relation("MessageSender")
+  receivedMessages   Message[]    @relation("MessageReceiver")
+  createdUpdates     ScheduleUpdate[]
+  notifications      Notification[]
+  uploadedFiles      SharedFile[]  // Added this relation
 
   @@map("users")
 }
 
+model Class {
+  id          Int       @id @default(autoincrement())
+  name        String
+  code        String
+  description String?
+  location    String
+  startTime   DateTime
+  endTime     DateTime
+  days        String[]  // e.g., ["MON", "WED", "FRI"]
+  capacity    Int
+  status      ClassStatus @default(ACTIVE)
+  semester    String
+
+  // Relations
+  instructorId   Int?
+  instructor     User?     @relation("InstructorClasses", fields: [instructorId], references: [id])
+  hocId          Int?
+  hoc            User?     @relation("HOCClasses", fields: [hocId], references: [id])
+  enrollments    Enrollment[]
+  attendance     AttendanceRecord[]
+  assignments    Assignment[]
+  scheduleUpdates ScheduleUpdate[]
+  studyGroups    StudyGroup[]
+  grades         Grade[]    // Added this relation
+  sharedFiles    SharedFile[]  // Added this relation
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("classes")
+}
+
+model Enrollment {
+  id      Int   @id @default(autoincrement())
+  userId  Int
+  classId Int
+  enrolledAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  class Class @relation(fields: [classId], references: [id])
+
+  @@unique([userId, classId])
+  @@map("enrollments")
+}
+
+model AttendanceRecord {
+  id      Int   @id @default(autoincrement())
+  userId  Int
+  classId Int
+  date    DateTime
+  status  AttendanceStatus @default(PRESENT)
+  markedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  class Class @relation(fields: [classId], references: [id])
+
+  @@unique([userId, classId, date])
+  @@map("attendance_records")
+}
+
+model Assignment {
+  id          Int       @id @default(autoincrement())
+  classId     Int
+  title       String
+  description String?
+  dueDate     DateTime
+  points      Int
+  weight      Float     @default(1.0)
+  createdById Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  class       Class     @relation(fields: [classId], references: [id])
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  submissions AssignmentSubmission[]
+
+  @@map("assignments")
+}
+
+model AssignmentSubmission {
+  id           Int       @id @default(autoincrement())
+  assignmentId Int
+  userId       Int
+  filePath     String?
+  content      String?
+  status       SubmissionStatus @default(PENDING)
+  submittedAt  DateTime  @default(now())
+  grade        Int?
+  feedback     String?
+  gradedAt     DateTime?
+
+  // Relations
+  assignment Assignment @relation(fields: [assignmentId], references: [id])
+  user       User       @relation(fields: [userId], references: [id])
+
+  @@unique([assignmentId, userId])
+  @@map("assignment_submissions")
+}
+
+model Grade {
+  id        Int     @id @default(autoincrement())
+  userId    Int
+  classId   Int
+  points    Int
+  percentage Float
+  gradeLetter String
+
+  // Relations
+  user  User  @relation(fields: [userId], references: [id])
+  class Class @relation(fields: [classId], references: [id])
+
+  @@unique([userId, classId])
+  @@map("grades")
+}
+
+model StudyGroup {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String?
+  classId     Int
+  createdById Int
+  focusArea   String?
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  class     Class     @relation(fields: [classId], references: [id])
+  createdBy User      @relation("StudyGroupCreator", fields: [createdById], references: [id])
+  members   StudyGroupMember[]
+  messages  Message[]
+  files     SharedFile[]
+
+  @@map("study_groups")
+}
+
+model StudyGroupMember {
+  id           Int       @id @default(autoincrement())
+  studyGroupId Int
+  userId       Int
+  joinedAt     DateTime  @default(now())
+  role         GroupRole @default(MEMBER)
+
+  // Relations
+  studyGroup StudyGroup @relation(fields: [studyGroupId], references: [id])
+  user       User       @relation(fields: [userId], references: [id])
+
+  @@unique([studyGroupId, userId])
+  @@map("study_group_members")
+}
+
+model Message {
+  id           Int       @id @default(autoincrement())
+  fromUserId   Int
+  toUserId     Int?
+  studyGroupId Int?
+  messageText  String
+  messageType  MessageType @default(TEXT)
+  isRead       Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+
+  // Relations
+  fromUser     User      @relation("MessageSender", fields: [fromUserId], references: [id])
+  toUser       User?     @relation("MessageReceiver", fields: [toUserId], references: [id])
+  studyGroup   StudyGroup? @relation(fields: [studyGroupId], references: [id])
+
+  @@map("messages")
+}
+
+model SharedFile {
+  id           Int       @id @default(autoincrement())
+  fileName     String
+  filePath     String
+  uploadedById Int
+  classId      Int?
+  studyGroupId Int?
+  shareType    ShareType @default(CLASS)
+  uploadedAt   DateTime  @default(now())
+
+  // Relations
+  uploadedBy User       @relation(fields: [uploadedById], references: [id])
+  class      Class?     @relation(fields: [classId], references: [id])
+  studyGroup StudyGroup? @relation(fields: [studyGroupId], references: [id])
+
+  @@map("shared_files")
+}
+
+model ScheduleUpdate {
+  id           Int           @id @default(autoincrement())
+  classId      Int
+  updateType   UpdateType
+  oldTime      DateTime?
+  newTime      DateTime?
+  oldLocation  String?
+  newLocation  String?
+  reason       String
+  message      String?
+  createdById  Int
+  createdAt    DateTime      @default(now())
+
+  // Relations
+  class      Class @relation(fields: [classId], references: [id])
+  createdBy  User  @relation(fields: [createdById], references: [id])
+
+  @@map("schedule_updates")
+}
+
+model Notification {
+  id               Int             @id @default(autoincrement())
+  userId           Int
+  notificationType NotificationType
+  title            String
+  body             String
+  isRead           Boolean         @default(false)
+  relatedId        Int?            // ID of related entity (class, assignment, etc)
+  createdAt        DateTime        @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+// Enums
 enum Role {
   STUDENT
   HOC
   INSTRUCTOR
   ADMIN
+}
+
+enum ClassStatus {
+  ACTIVE
+  CANCELLED
+  COMPLETED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum SubmissionStatus {
+  PENDING
+  SUBMITTED
+  GRADED
+  OVERDUE
+}
+
+enum GroupRole {
+  MEMBER
+  MODERATOR
+  ADMIN
+}
+
+enum MessageType {
+  TEXT
+  FILE
+  SYSTEM
+}
+
+enum ShareType {
+  CLASS
+  GROUP
+  PRIVATE
+}
+
+enum UpdateType {
+  CANCELLED
+  RESCHEDULED
+  LOCATION_CHANGED
+  GENERAL
+}
+
+enum NotificationType {
+  CLASS_CANCELLED
+  CLASS_RESCHEDULED
+  LOCATION_CHANGED
+  ASSIGNMENT_DUE
+  ASSIGNMENT_GRADED
+  GRADE_PUBLISHED
+  NEW_MESSAGE
+  MENTIONED
+  HOC_APPROVED
+  GENERAL
 }
