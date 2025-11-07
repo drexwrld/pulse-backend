@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { prisma } from '../db';
+import { prisma } from '../db.js';
 
 const settingsRoutes = new Hono();
 
