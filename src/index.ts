@@ -3,6 +3,8 @@ import { cors } from "hono/cors";
 import { serve } from "@hono/node-server";
 import authRoutes from "./routes/auth.js";
 import adminRoutes from "./routes/admin.js";
+import homeRoutes from './routes/home';
+
 
 const app = new Hono(); // ✅ must come before mounting routes
 
@@ -41,6 +43,8 @@ app.get("/api/test", (c) =>
 // ✅ Mount routes
 app.route("/api/auth", authRoutes);
 app.route("/api/admin", adminRoutes); // 🧩 move here after app is declared
+app.route('/api/home', homeRoutes);
+
 
 // ✅ 404 handler
 app.notFound((c) => c.json({ error: "Not Found" }, 404));
