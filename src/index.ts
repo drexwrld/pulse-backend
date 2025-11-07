@@ -3,7 +3,7 @@ import { cors } from "hono/cors";
 import { serve } from "@hono/node-server";
 import authRoutes from "./routes/auth.js";
 import adminRoutes from "./routes/admin.js";
-import homeRoutes from './routes/home';
+import homeRoutes from './routes/home.js';
 
 
 const app = new Hono(); // ✅ must come before mounting routes
