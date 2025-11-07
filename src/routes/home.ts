@@ -1,13 +1,8 @@
 // apps/api/src/routes/home.ts
 import { Hono } from 'hono';
-import { z } from 'zod';
 import { prisma } from '../db';
 
 const home = new Hono();
-
-// Middleware to verify JWT and attach user
-// TODO: Import your auth middleware here
-// home.use('/*', authMiddleware);
 
 // Get complete dashboard data
 home.get('/dashboard', async (c) => {
@@ -21,7 +16,7 @@ home.get('/dashboard', async (c) => {
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     // Get user's enrollments for today's classes
-    const todayClasses = await prisma.classes.findMany({
+    const todayClasses = await prisma.class.findMany({
       where: {
         enrollments: {
           some: { userId },
@@ -41,7 +36,7 @@ home.get('/dashboard', async (c) => {
     });
 
     // Get cancelled classes count
-    const cancelledCount = await prisma.classes.count({
+    const cancelledCount = await prisma.class.count({
       where: {
         enrollments: {
           some: { userId },
@@ -52,7 +47,7 @@ home.get('/dashboard', async (c) => {
     });
 
     // Get unread updates count
-    const updatesCount = await prisma.scheduleUpdates.count({
+    const updatesCount = await prisma.scheduleUpdate.count({
       where: {
         class: {
           enrollments: {
@@ -64,7 +59,7 @@ home.get('/dashboard', async (c) => {
     });
 
     // Get pending assignments count
-    const tasksPending = await prisma.assignments.count({
+    const tasksPending = await prisma.assignment.count({
       where: {
         class: {
           enrollments: {
@@ -90,7 +85,7 @@ home.get('/dashboard', async (c) => {
     });
 
     // Get recent updates
-    const recentUpdates = await prisma.scheduleUpdates.findMany({
+    const recentUpdates = await prisma.scheduleUpdate.findMany({
       where: {
         class: {
           enrollments: {
@@ -104,7 +99,7 @@ home.get('/dashboard', async (c) => {
             name: true,
           },
         },
-        createdByUser: {
+        createdBy: {
           select: {
             fullName: true,
             isHOC: true,
@@ -153,8 +148,8 @@ home.get('/dashboard', async (c) => {
         newTime: update.newTime,
         oldLocation: update.oldLocation,
         newLocation: update.newLocation,
-        changedBy: `${update.createdByUser.isHOC ? 'HOC' : 'Admin'} - ${
-          update.createdByUser.fullName
+        changedBy: `${update.createdBy.isHOC ? 'HOC' : 'Admin'} - ${
+          update.createdBy.fullName
         }`,
         timestamp: getRelativeTime(update.createdAt),
       })),
@@ -172,26 +167,26 @@ home.get('/stats', async (c) => {
 
     const [totalClasses, cancelledClasses, updatesCount, tasksPending] =
       await Promise.all([
-        prisma.classes.count({
+        prisma.class.count({
           where: {
             enrollments: { some: { userId } },
             // TODO: Add today filter
           },
         }),
-        prisma.classes.count({
+        prisma.class.count({
           where: {
             enrollments: { some: { userId } },
             status: 'CANCELLED',
             // TODO: Add today filter
           },
         }),
-        prisma.scheduleUpdates.count({
+        prisma.scheduleUpdate.count({
           where: {
             class: { enrollments: { some: { userId } } },
             // TODO: Add unread filter
           },
         }),
-        prisma.assignments.count({
+        prisma.assignment.count({
           where: {
             class: { enrollments: { some: { userId } } },
             dueDate: { gte: new Date() },
