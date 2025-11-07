@@ -72,6 +72,16 @@ model Class {
   grades         Grade[]    // Added this relation
   sharedFiles    SharedFile[]  // Added this relation
 
+ // New profile fields
+  phone         String?
+  studentId     String?
+  avatarUrl     String?
+  notificationsEnabled Boolean @default(true)
+  darkModeEnabled Boolean @default(true)
+  language      String   @default("en")
+
+
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

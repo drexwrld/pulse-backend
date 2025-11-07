@@ -4,7 +4,7 @@ import { serve } from "@hono/node-server";
 import authRoutes from "./routes/auth.js";
 import adminRoutes from "./routes/admin.js";
 import homeRoutes from './routes/home.js';
-
+import settingsRoutes from './routes/settings'; // Add this import
 
 const app = new Hono(); // ✅ must come before mounting routes
 
@@ -44,6 +44,10 @@ app.get("/api/test", (c) =>
 app.route("/api/auth", authRoutes);
 app.route("/api/admin", adminRoutes); // 🧩 move here after app is declared
 app.route('/api/home', homeRoutes);
+app.route('/api/settings', settingsRoutes); // Add this line
+
+
+
 
 
 // ✅ 404 handler
