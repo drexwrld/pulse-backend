@@ -7,7 +7,6 @@ const settingsRoutes = new Hono();
 // Get user profile
 settingsRoutes.get('/profile', async (c) => {
   try {
-    // TODO: Get user from JWT token
     const userId = 1; // Mock user ID - replace with actual auth
 
     const user = await prisma.user.findUnique({
@@ -16,11 +15,13 @@ settingsRoutes.get('/profile', async (c) => {
         id: true,
         email: true,
         fullName: true,
-        role: true,
+        role: true, // This will always show actual role (STUDENT/INSTRUCTOR/ADMIN)
         department: true,
         academicYear: true,
-        isHOC: true,
-        isHOCPending: true,
+        isHOC: true, // True only if admin approved
+        isHOCPending: true, // True if requesting HOC but not approved yet
+        phone: true,
+        studentId: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -146,11 +147,20 @@ settingsRoutes.get('/hoc-tools', async (c) => {
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { isHOC: true },
+      select: { isHOC: true, isHOCPending: true },
     });
 
-    if (!user || !user.isHOC) {
-      return c.json({ error: 'HOC access required' }, 403);
+    if (!user) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+
+    // Only allow access if user is approved HOC
+    if (!user.isHOC) {
+      return c.json({ 
+        error: user.isHOCPending 
+          ? 'HOC access pending admin approval' 
+          : 'HOC access required' 
+      }, 403);
     }
 
     // Mock HOC data
