@@ -4,7 +4,7 @@ import { serve } from "@hono/node-server";
 import authRoutes from "./routes/auth.js";
 import adminRoutes from "./routes/admin.js";
 import homeRoutes from './routes/home.js';
-import settingsRoutes from './routes/settings'; // Add this import
+import settingsRoutes from './routes/settings.js'; // Add this import
 
 const app = new Hono(); // ✅ must come before mounting routes
 
